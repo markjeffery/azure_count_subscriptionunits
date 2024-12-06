@@ -1,6 +1,9 @@
 Microsoft.Sql/servers
+Microsoft.SqlVirtualMachine/servers
+Microsoft.AzureData/servers
 Microsoft.DBforMySQL/servers
 Microsoft.DBforPostgreSQL/servers
+Microsoft.DBforMariaDB/servers
 Microsoft.DocumentDB/databaseAccounts
 Microsoft.Cache/Redis
 Microsoft.Web/sites
