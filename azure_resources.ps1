@@ -1,43 +1,64 @@
 $total_count = 0
 $sub_count = 0
-$hashTable = @{}
+$su_count = 0
 
 # Get Azure Subscriptions ID's
 $GroupList = az account list --query '[].id'
 
 # Loop for each Azure Subscription ID
 foreach ($id in $GroupList) {
-    $sub_count = 0
     if ($id.length -gt 4) {
+        $sub_count = 0
         $Id_Comp = $id.substring(2,37).Trim('"', " ")
         az account set --subscription $Id_Comp
         echo "Current subscription is " $Id_Comp
         # use for loop to read all values and ID
-        $vm=$(az resource list --resource-type "Microsoft.Compute/virtualmachines" --query "[?contains(id,'$Id_Comp')]" --output table | wc -l)
-        if ($vm -gt 1) {
+        # echo "Microsoft.Compute/virtualmachines"
+        $vm=$(az resource list --resource-type "Microsoft.Compute/virtualmachines" --query "length([?contains(id,'$Id_Comp')])")
+        if ($vm -gt 0) {
             # Server resources are counted at 1:1 SU
-            $vm = $vm - 2
             echo "VirtualMachine Count: $vm"
             $total_count = $total_count + $vm
             $sub_count = $sub_count + $vm
         }
+        echo "Subtotal for Virtual Machines $sub_count"
 
+        $sub_count = 0
+        $su_count = 0
         foreach ($line in Get-Content .\resources.azure.list) {
             # echo "Line_ID $line for Id_Comp $Id_Comp"
-            $res=$(az resource list --resource-type "$line" --query "[?contains(id,'$Id_Comp')]" --output table | wc -l)
-            # echo "Result count for PaaS $res"
+            if ($line.equals("Microsoft.Web/sites")) {
+                $res=$(az resource list --resource-type "$line" --query "length([?contains(id,'$Id_Comp')] && [?kind == 'app'])")
+            } else {
+                $res=$(az resource list --resource-type "$line" --query "length([?contains(id,'$Id_Comp')])")
+            }
+            
             # loop to count total PaaS resources for all ID's
-            if ($res -gt 1) {
-                # PaaS services are counted at 1:3 SU's
-                $res = ($res - 2)/3
-                $total_count = $total_count + $res
+            if ($res -gt 0) {
+                # Sub Count is for count of PaaS resources
                 $sub_count = $sub_count + $res
+                # PaaS services are counted at 1:3 SU's
+                $res = ($res)/3
+                $su_count = $su_count + $res
+                $total_count = $total_count + $res
             }
         }
-        $hashTable.Add($Id_Comp,$sub_count)
+        echo "Subtotal for Platform as service $sub_count, SUs $su_count"
+
+        $sub_count = 0
+        $su_count = 0
+        foreach ($line in Get-Content .\resources.faas.azure.list) {
+            # echo "Line_ID $line for Id_Comp $Id_Comp"
+            $res=$(az resource list --resource-type "$line" --query "length([?contains(id,'$Id_Comp')] && [?contains(kind,'functionapp')])")
+            if ($res -gt 0) {
+                $sub_count = $sub_count + $res
+                # FaaS services are counted at 1:20 SU's
+                $su_count = $su_count + $res
+                $total_count = $total_count + ($res / 20)
+            }
+        }
+        echo "Subtotal for Function as service $sub_count, SUs $su_count"
     }
 }
-
-$hashTable
 
 echo "Total number of resources in all subscriptions: $total_count"
