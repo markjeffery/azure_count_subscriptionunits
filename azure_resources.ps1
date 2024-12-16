@@ -38,9 +38,8 @@ foreach ($id in $GroupList) {
                 # Sub Count is for count of PaaS resources
                 $sub_count = $sub_count + $res
                 # PaaS services are counted at 1:3 SU's
-                $res = ($res)/3
-                $su_count = $su_count + $res
-                $total_count = $total_count + $res
+                $su_count = $su_count + ($res/3)
+                $total_count = $total_count + ($res/3)
             }
         }
         echo "Subtotal for Platform as service $sub_count, SUs $su_count"
@@ -53,7 +52,7 @@ foreach ($id in $GroupList) {
             if ($res -gt 0) {
                 $sub_count = $sub_count + $res
                 # FaaS services are counted at 1:20 SU's
-                $su_count = $su_count + $res
+                $su_count = $su_count + ($res / 20)
                 $total_count = $total_count + ($res / 20)
             }
         }
