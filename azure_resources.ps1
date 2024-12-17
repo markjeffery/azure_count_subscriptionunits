@@ -37,9 +37,9 @@ foreach ($id in $GroupList) {
             if ($res -gt 0) {
                 # Sub Count is for count of PaaS resources
                 $sub_count = $sub_count + $res
-                # PaaS services are counted at 1:3 SU's
-                $su_count = $su_count + ($res/3)
-                $total_count = $total_count + ($res/3)
+                # PaaS services are counted at 1:3 SU's - This script rounds the SU up to the next integer.
+                $su_count = $su_count + [Math]::Round($res/3, 0)
+                $total_count = $total_count + [Math]::Round($res/3, 0)
             }
         }
         echo "Subtotal for Platform as service $sub_count, SUs $su_count"
@@ -51,9 +51,9 @@ foreach ($id in $GroupList) {
             $res=$(az resource list --resource-type "$line" --query "length([?contains(id,'$Id_Comp')] && [?contains(kind,'functionapp')])")
             if ($res -gt 0) {
                 $sub_count = $sub_count + $res
-                # FaaS services are counted at 1:20 SU's
-                $su_count = $su_count + ($res / 20)
-                $total_count = $total_count + ($res / 20)
+                # FaaS services are counted at 1:20 SU's - This script rounds the SU up to the next integer.
+                $su_count = $su_count + [Math]::Round($res/20, 0)
+                $total_count = $total_count + [Math]::Round($res/20, 0)
             }
         }
         echo "Subtotal for Function as service $sub_count, SUs $su_count"
